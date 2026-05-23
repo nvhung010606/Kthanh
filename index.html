@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Descent with Modification — Study Hub</title>
+<style>
+  :root {
+    --navy: #1E2761;
+    --navy-deep: #131845;
+    --ice: #CADCFC;
+    --gold: #F9C846;
+    --coral: #F96167;
+    --leaf: #84B59F;
+    --text: #1a1a1a;
+    --muted: #6b7280;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background: #ffffff;
+    color: var(--text);
+    min-height: 100vh;
+  }
+  .wrap {
+    max-width: 820px;
+    margin: 0 auto;
+    padding: 64px 20px 80px;
+  }
+  header {
+    text-align: center;
+    margin-bottom: 48px;
+  }
+  .eyebrow {
+    display: inline-block;
+    background: var(--ice);
+    color: var(--navy);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 6px 12px;
+    border-radius: 999px;
+    margin-bottom: 18px;
+  }
+  h1 {
+    color: var(--navy);
+    font-size: clamp(28px, 5vw, 44px);
+    margin: 0 0 12px;
+    letter-spacing: -0.8px;
+  }
+  header p {
+    color: var(--muted);
+    margin: 0 auto;
+    font-size: 16px;
+    max-width: 540px;
+    line-height: 1.5;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+  @media (min-width: 640px) {
+    .grid { grid-template-columns: 1fr 1fr; }
+  }
+  .card {
+    display: block;
+    text-decoration: none;
+    color: inherit;
+    background: #ffffff;
+    border: 1px solid #e6e8ef;
+    border-radius: 16px;
+    padding: 28px 24px;
+    transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
+  }
+  .card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 14px 32px -16px rgba(30, 39, 97, 0.25);
+    border-color: var(--navy);
+  }
+  .icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    margin-bottom: 16px;
+  }
+  .icon.gold { background: var(--gold); }
+  .icon.ice  { background: var(--ice); }
+  .card h2 {
+    color: var(--navy);
+    font-size: 19px;
+    margin: 0 0 6px;
+    letter-spacing: -0.3px;
+  }
+  .card p {
+    color: var(--muted);
+    margin: 0 0 14px;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+  .arrow {
+    color: var(--navy);
+    font-weight: 600;
+    font-size: 14px;
+  }
+  footer {
+    text-align: center;
+    margin-top: 56px;
+    color: var(--muted);
+    font-size: 13px;
+  }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <span class="eyebrow">Biology · Evolution</span>
+      <h1>Descent with Modification</h1>
+      <p>Two ways to study the core ideas — drill the terms with flashcards, or see how everything connects on the mindmap.</p>
+    </header>
+
+    <div class="grid">
+      <a class="card" href="Descent_with_Modification_Flashcards.html">
+        <div class="icon gold">🗂️</div>
+        <h2>Flashcards</h2>
+        <p>Self-test on key terms, concepts, and evidence — flip through cards at your own pace.</p>
+        <span class="arrow">Start studying →</span>
+      </a>
+
+      <a class="card" href="Descent_with_Modification_Mindmap.html">
+        <div class="icon ice">🧠</div>
+        <h2>Mindmap</h2>
+        <p>Zoom around an interactive map of how the ideas branch and link to one another.</p>
+        <span class="arrow">Open mindmap →</span>
+      </a>
+    </div>
+
+    <footer>Built for studying · hosted on GitHub Pages</footer>
+  </div>
+</body>
+</html>
