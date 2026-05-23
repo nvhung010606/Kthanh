@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Descent with Modification — Mindmap</title>
+<style>
+  :root {
+    --navy: #1E2761;
+    --navy-deep: #131845;
+    --ice: #CADCFC;
+    --gold: #F9C846;
+    --muted: #6b7280;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0; height: 100%;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background: #ffffff;
+    overflow: hidden;
+    color: var(--navy);
+  }
+  .topbar {
+    position: fixed; top: 0; left: 0; right: 0;
+    padding: 14px 20px;
+    background: rgba(255,255,255,0.92);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    z-index: 10;
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 16px;
+    border-bottom: 1px solid #e6e8ef;
+  }
+  .topbar h1 {
+    margin: 0;
+    color: var(--navy);
+    font-size: clamp(15px, 2vw, 18px);
+    letter-spacing: -0.3px;
+  }
+  .topbar h1 .sub {
+    color: var(--muted);
+    font-weight: 400;
+    margin-left: 10px;
+    font-size: 13px;
+  }
+  .controls { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    border: 1px solid #e0e3eb;
+    cursor: pointer;
+    background: #f4f6fa;
+    color: var(--navy);
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-size: 13px;
+    font-weight: 600;
+    transition: background 0.15s, transform 0.1s, border-color 0.15s;
+  }
+  .btn:hover  { background: #e9edf5; border-color: #cdd3e0; }
+  .btn:active { transform: translateY(1px); }
+  .btn.gold   { background: var(--navy); border-color: var(--navy); color: white; }
+  .btn.gold:hover { background: var(--navy-deep); border-color: var(--navy-deep); }
+
+  #mindmap-host {
+    position: absolute;
+    top: 60px; left: 0; right: 0; bottom: 36px;
+    background: #ffffff;
+  }
+  svg#mindmap {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+  /* Style markmap nodes for the white background */
+  svg#mindmap .markmap-foreign,
+  svg#mindmap foreignObject {
+    color: #1a1a1a;
+  }
+  svg#mindmap foreignObject div {
+    color: #1a1a1a !important;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif !important;
+    font-weight: 500;
+  }
+  svg#mindmap foreignObject strong { color: var(--navy); }
+  svg#mindmap .markmap-link { stroke-opacity: 0.7; }
+
+  .footer {
+    position: fixed; left: 0; right: 0; bottom: 0;
+    padding: 8px 16px;
+    background: rgba(255,255,255,0.92);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    color: var(--muted);
+    font-size: 12px;
+    text-align: center;
+    border-top: 1px solid #e6e8ef;
+    z-index: 10;
+  }
+  .footer kbd {
+    background: #f4f6fa;
+    border: 1px solid #e0e3eb;
+    border-radius: 4px;
+    padding: 1px 6px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 11px;
+    margin: 0 2px;
+    color: var(--navy);
+  }
+  .status {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--muted);
+    font-size: 14px;
+    pointer-events: none;
+    text-align: center;
+    padding: 20px;
+  }
+  .status.hidden { display: none; }
+  .status code {
+    background: #f4f6fa;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: ui-monospace, monospace;
+    color: var(--navy);
+  }
+
+  @media (max-width: 600px) {
+    .topbar { flex-direction: column; align-items: stretch; gap: 8px; padding: 10px 12px; }
+    .topbar h1 .sub { display: block; margin-left: 0; }
+    #mindmap-host { top: 110px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <h1>Descent with Modification <span class="sub">Interactive Mindmap</span></h1>
+  <div class="controls">
+    <button class="btn" onclick="expandAll()">Expand all</button>
+    <button class="btn" onclick="collapseAll()">Collapse to L2</button>
+    <button class="btn" onclick="fit()">Fit to screen</button>
+    <button class="btn gold" onclick="resetView()">Reset</button>
+  </div>
+</div>
+
+<div id="mindmap-host">
+  <svg id="mindmap"></svg>
+  <div class="status" id="status">Loading mindmap library&hellip;</div>
+</div>
+
+<div class="footer">
+  Click a node to collapse/expand its branch &nbsp;·&nbsp;
+  Scroll to <kbd>zoom</kbd> &nbsp;·&nbsp;
+  Drag to <kbd>pan</kbd>
+</div>
+
+<!-- markmap libraries; load several CDN candidates in order -->
+<script>
+const CDN_SETS = [
+  [
+    "https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js",
+    "https://cdn.jsdelivr.net/npm/markmap-view/dist/browser/index.js",
+    "https://cdn.jsdelivr.net/npm/markmap-lib/dist/browser/index.js",
+  ],
+  [
+    "https://unpkg.com/d3@7/dist/d3.min.js",
+    "https://unpkg.com/markmap-view/dist/browser/index.js",
+    "https://unpkg.com/markmap-lib/dist/browser/index.js",
+  ],
+];
+
+function loadScript(src) {
+  return new Promise((resolve, reject) => {
+    const s = document.createElement("script");
+    s.src = src;
+    s.onload = () => resolve(src);
+    s.onerror = () => reject(new Error("failed to load " + src));
+    document.head.appendChild(s);
+  });
+}
+
+async function loadFirstWorkingSet() {
+  for (const set of CDN_SETS) {
+    try {
+      for (const url of set) await loadScript(url);
+      if (window.markmap && window.markmap.Markmap) return true;
+    } catch (e) {
+      console.warn("CDN set failed:", e);
+    }
+  }
+  return false;
+}
+
+const MARKDOWN = `
+# Descent with Modification
+## 1. What is Biological Evolution?
+- Heritable change in characteristics of a population/species across generations
+- Key word: **heritable** — only gene-carried changes count
+### Microevolution
+- Small-scale change in **allele frequencies** within a population
+- E.g., shift in beak size after a drought
+### Macroevolution
+- Large-scale change producing new species or higher groups
+- E.g., dinosaurs radiating into birds
+### Species vs. Population
+- **Species**: related organisms sharing a distinctive form; sexual species interbreed → fertile offspring
+- **Population**: members of one species close enough to interbreed
+
+## 2. Historical Road to Darwin
+### Lamarck (early 1800s)
+- First to suggest species change with environment
+- **Inheritance of acquired characteristics** — WRONG mechanism
+- Example: giraffe stretches neck → passes long neck to offspring
+- Life-acquired traits aren't in the gametes
+### Malthus (1797)
+- *Essay on the Principle of Population*
+- Population grows faster than food supply → competition
+- Darwin extended this idea to all organisms
+### Darwin & Wallace
+- Independently conceived **natural selection**
+- Joint paper presented in **1858**
+- *On the Origin of Species* — published **1859**
+- Wallace: Amazon + SE Asia, focused on biogeography
+### Darwin's unique insight
+- First to explain HOW species change without individuals changing
+- → differential survival & reproduction of pre-existing variation
+### Galápagos (~1835)
+- Beagle voyage
+- Finch beak shapes adapted to different food sources
+
+## 3. Natural Selection Mechanism
+### Four requirements
+- **Variation** — individuals differ in their traits
+- **Heritability** — those differences have a genetic basis
+- **Overproduction & competition** — more offspring than resources
+- **Differential survival & reproduction** — better traits become more common
+### Result
+- Accumulated **adaptations** — heritable traits that fit the environment
+### Galápagos ground finch (1978 drought)
+- Drought killed small seeds
+- Small-beaked birds couldn't crack remaining large seeds
+- Large-beaked birds survived & reproduced
+- ↑ mean beak size = **microevolution in real time**
+### Common misconception
+- Organisms don't *try* to evolve
+- Variation already exists — the environment filters it
+
+## 4. Five Lines of Evidence
+### 4.1 Fossil Record
+- **Fossil** = traces of past organisms, usually in sedimentary rock
+- Deeper strata = older fossils
+- Incomplete but shows gradual change
+- Horse fossils: size, foot, tooth evolution
+- **Transitional form** — intermediate between ancestor & descendant
+### 4.2 Biogeography
+- Study of geographic distribution of species
+- Isolated areas → endemic species (wombat, flightless cormorant)
+- Islands → evolution obvious; populations evolve independently
+- Similar species on now-distant continents → past physical connection (continental drift)
+- Most isolated population = most genetically diverged
+### 4.3 Natural & Artificial Selection (observed)
+- Natural selection observed directly (finches)
+- **Artificial selection** — humans choose who reproduces
+- Made possible by existing heritable variation
+- Dog breeds, crops, livestock
+- Difference vs. natural: artificial has a goal; natural does not
+### 4.4 Homologies
+- **Homology** = similarity due to descent from a common ancestor
+#### Anatomical
+- Same bone plan: human, cat, whale, bat forelimbs
+- **Vestigial structures** — whale hind-limb bones
+#### Developmental
+- Similar early embryonic stages across vertebrates
+- Pharyngeal pouches, tails
+#### Molecular
+- All life uses DNA
+- Closer relatives → more similar sequences
+- Human ≈ gorilla > mouse > goldfish > fern
+### 4.5 Convergent Evolution
+- Independent evolution of similar traits in unrelated lineages
+- Driven by similar environments / problems
+- **Analogous structures** — similarity from convergence, NOT ancestry
+- Chipmunk vs. sugar glider
+- Anteater vs. echidna — long snouts/tongues
+- Antifreeze proteins in unrelated cold-water fish
+- Makes classification harder (dolphin looks like a shark)
+
+## 5. Homologous vs. Analogous
+### Homologous = shared ancestry
+- Bird wing ↔ bat wing ↔ whale flipper
+### Analogous = convergent evolution
+- Bird wing ↔ insect wing
+
+## 6. Sources of Genetic Variation
+- Variation is the raw material natural selection acts on
+### Random mutation
+- Ultimate source of all new alleles
+- Spontaneous DNA changes
+### Exon shuffling
+- Recombination rearranges exons among genes
+- Generates novel protein domains
+### Horizontal gene transfer
+- DNA transfer outside parent → offspring
+- Common in bacteria (e.g., antibiotic resistance)
+
+## 7. Exam-Ready Checks
+- "Strived to" / "stretched to" → Lamarck, not Darwin
+- Deepest stratum → oldest organism
+- Bird wing vs. insect wing → **analogous**
+- Whale hind-limb bones → **vestigial** homology
+- "Recent common ancestor" → homologous structures + similar embryos
+- 250-mya marine fossils — search where continents *touched* at that time
+`;
+
+let mm = null;
+let rootData = null;
+let statusEl;
+
+async function init() {
+  statusEl = document.getElementById("status");
+  const ok = await loadFirstWorkingSet();
+  if (!ok) {
+    statusEl.innerHTML =
+      "Couldn't load the mindmap library from any CDN.<br>" +
+      "Check your internet connection and reload, or open this file while online.";
+    return;
+  }
+  if (!window.markmap.Transformer) {
+    statusEl.textContent = "Markmap loaded but Transformer is missing — please reload.";
+    return;
+  }
+
+  const { Markmap, Transformer } = window.markmap;
+  const transformer = new Transformer();
+  const { root } = transformer.transform(MARKDOWN.trim());
+  rootData = root;
+
+  mm = Markmap.create("#mindmap", {
+    duration: 400,
+    nodeMinHeight: 18,
+    spacingHorizontal: 90,
+    spacingVertical: 14,
+    paddingX: 10,
+    autoFit: true,
+    initialExpandLevel: 3,
+    color: (node) => {
+      // Vibrant palette designed for a white background (good contrast on links/labels)
+      const palette = ["#1E2761", "#D94C52", "#4A8A6C", "#1C7293", "#B85042", "#7A4FA0", "#D89614"];
+      const depth = (node.state && node.state.depth) || 0;
+      return palette[depth % palette.length];
+    },
+  }, root);
+
+  statusEl.classList.add("hidden");
+}
+
+function walk(node, fn) {
+  fn(node);
+  if (node.children) node.children.forEach(c => walk(c, fn));
+}
+
+function setFold(level) {
+  if (!mm || !rootData) return;
+  walk(rootData, (n) => {
+    const d = (n.state && n.state.depth) || 0;
+    n.payload = n.payload || {};
+    n.payload.fold = (d >= level) ? 1 : 0;
+  });
+  mm.setData(rootData);
+  mm.fit();
+}
+
+function expandAll()   { setFold(99); }
+function collapseAll() { setFold(2);  }
+function fit()         { if (mm) mm.fit(); }
+function resetView()   { setFold(3);  }
+
+init();
+</script>
+</body>
+</html>

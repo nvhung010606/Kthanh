@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Descent with Modification — Flashcards</title>
+<style>
+  :root {
+    --navy: #1E2761;
+    --navy-deep: #131845;
+    --ice: #CADCFC;
+    --gold: #F9C846;
+    --coral: #F96167;
+    --leaf: #84B59F;
+    --text: #1a1a1a;
+    --muted: #6b7280;
+    --bg: #ffffff;
+    --card-bg: #ffffff;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background: #ffffff;
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  .wrap {
+    max-width: 820px;
+    margin: 0 auto;
+    padding: 32px 20px 80px;
+  }
+
+  header {
+    color: var(--navy);
+    text-align: center;
+    margin-bottom: 24px;
+  }
+  header h1 {
+    font-size: clamp(24px, 4vw, 34px);
+    margin: 0 0 6px;
+    letter-spacing: -0.5px;
+  }
+  header p {
+    color: var(--muted);
+    margin: 0;
+    font-size: 14px;
+  }
+
+  /* Progress bar */
+  .progress {
+    background: #e6e8ef;
+    border-radius: 999px;
+    height: 8px;
+    overflow: hidden;
+    margin-bottom: 12px;
+  }
+  .progress > div {
+    background: var(--navy);
+    height: 100%;
+    width: 0%;
+    transition: width 0.3s ease;
+  }
+  .progress-meta {
+    display: flex;
+    justify-content: space-between;
+    color: var(--muted);
+    font-size: 13px;
+    margin-bottom: 22px;
+  }
+  .progress-meta .known { color: #4a8a6c; font-weight: 600; }
+
+  /* Card */
+  .card-area {
+    perspective: 1600px;
+    margin-bottom: 24px;
+  }
+  .card {
+    position: relative;
+    width: 100%;
+    min-height: 360px;
+    transform-style: preserve-3d;
+    transition: transform 0.55s cubic-bezier(0.4, 0.0, 0.2, 1);
+    cursor: pointer;
+  }
+  .card.flipped { transform: rotateY(180deg); }
+
+  .face {
+    position: absolute;
+    inset: 0;
+    background: var(--card-bg);
+    border: 1px solid #e6e8ef;
+    border-radius: 18px;
+    box-shadow: 0 12px 32px rgba(30,39,97,0.08), 0 2px 6px rgba(30,39,97,0.05);
+    padding: 36px 36px 64px;
+    display: flex;
+    flex-direction: column;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    overflow: hidden;
+  }
+  .face.back { transform: rotateY(180deg); }
+
+  .face .label {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    align-self: flex-start;
+    padding: 4px 12px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+  }
+  .face.front .label { background: var(--navy); color: white; }
+  .face.back .label  { background: var(--gold); color: var(--navy); }
+
+  .face .body {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 12px 4px;
+  }
+  .face .body p {
+    font-size: clamp(18px, 2.6vw, 22px);
+    line-height: 1.5;
+    margin: 0;
+    max-width: 600px;
+  }
+  .face.front .body p { font-weight: 600; color: var(--navy); }
+  .face.back  .body p { color: #2a2a2a; }
+
+  .face .hint {
+    position: absolute;
+    bottom: 16px;
+    left: 0; right: 0;
+    text-align: center;
+    font-size: 12px;
+    color: var(--muted);
+    letter-spacing: 0.4px;
+  }
+
+  .card-num {
+    position: absolute;
+    top: 18px;
+    right: 22px;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--muted);
+    letter-spacing: 0.5px;
+  }
+
+  /* Controls */
+  .controls {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 16px;
+  }
+  .btn {
+    border: 1px solid #e0e3eb;
+    background: #f4f6fa;
+    color: var(--navy);
+    border-radius: 12px;
+    padding: 12px 16px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.1s, border-color 0.15s;
+  }
+  .btn:hover { background: #e9edf5; border-color: #cdd3e0; }
+  .btn:active { transform: translateY(1px); }
+  .btn.flip {
+    background: var(--navy);
+    border-color: var(--navy);
+    color: white;
+    width: 100%;
+  }
+  .btn.flip:hover { background: var(--navy-deep); border-color: var(--navy-deep); }
+
+  .secondary {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+  }
+  .secondary .btn {
+    background: white;
+    font-size: 13px;
+    padding: 9px 14px;
+    border-radius: 999px;
+  }
+  .secondary .btn.known {
+    background: #4a8a6c;
+    border-color: #4a8a6c;
+    color: white;
+  }
+  .secondary .btn.known:hover { background: #3f7a5e; border-color: #3f7a5e; }
+  .secondary .btn.unknown {
+    background: #d94c52;
+    border-color: #d94c52;
+    color: white;
+  }
+  .secondary .btn.unknown:hover { background: #c43e45; border-color: #c43e45; }
+  .secondary .btn.toggle.active {
+    background: var(--gold);
+    border-color: #e0ad2e;
+    color: var(--navy);
+  }
+
+  /* Keyboard hints */
+  .keys {
+    color: var(--muted);
+    font-size: 12px;
+    text-align: center;
+    margin-top: 22px;
+    line-height: 1.7;
+  }
+  .keys kbd {
+    background: #f4f6fa;
+    border: 1px solid #e0e3eb;
+    border-radius: 5px;
+    padding: 2px 7px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 11px;
+    margin: 0 2px;
+    color: var(--navy);
+  }
+
+  /* Empty state */
+  .empty {
+    color: var(--navy);
+    text-align: center;
+    padding: 40px 20px;
+  }
+  .empty h2 { margin: 0 0 8px; font-size: 22px; }
+  .empty p { color: var(--muted); margin: 0; }
+
+  @media (max-width: 520px) {
+    .face { padding: 28px 22px 56px; }
+    .card { min-height: 320px; }
+    .controls { grid-template-columns: 1fr; }
+    .controls .btn:not(.flip) { width: 100%; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Descent with Modification</h1>
+    <p>Interactive flashcards • Chapter 22</p>
+  </header>
+
+  <div class="progress"><div id="progress-bar"></div></div>
+  <div class="progress-meta">
+    <span id="counter">Card 1 of 43</span>
+    <span class="known" id="known-count">0 marked known</span>
+  </div>
+
+  <div class="card-area">
+    <div class="card" id="card" onclick="flip()" role="button" tabindex="0" aria-label="Flashcard">
+      <div class="face front">
+        <span class="label">Question</span>
+        <span class="card-num" id="num-front">#1</span>
+        <div class="body"><p id="question">…</p></div>
+        <div class="hint">Click card or press Space to reveal</div>
+      </div>
+      <div class="face back">
+        <span class="label">Answer</span>
+        <span class="card-num" id="num-back">#1</span>
+        <div class="body"><p id="answer">…</p></div>
+        <div class="hint">Click card or press Space to flip back</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <button class="btn" onclick="prev()" aria-label="Previous card">← Prev</button>
+    <button class="btn flip" onclick="flip()">Flip card</button>
+    <button class="btn" onclick="next()" aria-label="Next card">Next →</button>
+  </div>
+
+  <div class="secondary">
+    <button class="btn known"   onclick="markKnown()">✓ Got it</button>
+    <button class="btn unknown" onclick="markUnknown()">↻ Review again</button>
+    <button class="btn"         onclick="shuffle()">🔀 Shuffle</button>
+    <button class="btn"         onclick="reset()">Reset progress</button>
+    <button class="btn toggle"  id="filter-btn" onclick="toggleFilter()">Hide known: off</button>
+  </div>
+
+  <div class="keys">
+    <kbd>Space</kbd> flip &nbsp;·&nbsp;
+    <kbd>←</kbd> <kbd>→</kbd> navigate &nbsp;·&nbsp;
+    <kbd>K</kbd> got it &nbsp;·&nbsp;
+    <kbd>R</kbd> review again &nbsp;·&nbsp;
+    <kbd>S</kbd> shuffle
+  </div>
+</div>
+
+<script>
+const CARDS = [
+  ["What is biological evolution?",
+   "A heritable change in one or more characteristics of a population or species from one generation to the next."],
+  ["Microevolution vs. macroevolution?",
+   "Microevolution = small-scale changes in a single gene within a population. Macroevolution = large-scale changes producing new species or higher groups."],
+  ["Define species.",
+   "A group of related organisms that share a distinctive form. In sexually reproducing species, members can interbreed to produce viable, fertile offspring."],
+  ["Define population.",
+   "Members of the same species living closely enough to encounter each other and potentially interbreed."],
+  ["Who was Lamarck and what did he propose?",
+   "Early-1800s naturalist. Proposed 'inheritance of acquired characteristics' — traits gained during an individual's lifetime (e.g., a giraffe stretching its neck) are passed to offspring. WRONG mechanism."],
+  ["What did Thomas Malthus contribute (1797)?",
+   "His Essay on the Principle of Population argued populations grow faster than food supply, causing competition and famine. Darwin extended this to all organisms."],
+  ["Who independently conceived natural selection with Darwin?",
+   "Alfred Russel Wallace, a naturalist working in the Amazon and Southeast Asia, who was deeply interested in biogeography. Their joint paper was presented in 1858."],
+  ["What was Darwin's UNIQUE contribution to evolutionary theory?",
+   "He was the first to explain HOW species can change without individuals themselves changing — through differential survival and reproduction of pre-existing variation."],
+  ["What book did Darwin publish in 1859?",
+   "On the Origin of Species by Means of Natural Selection."],
+  ["Where did Darwin develop key ideas during the Beagle voyage?",
+   "The Galápagos Islands (~1835), where finch species showed beak shapes adapted to different food sources."],
+  ["What are the FOUR requirements for natural selection?",
+   "(1) Variation in traits, (2) traits are heritable, (3) more offspring are produced than can survive (competition for limited resources), (4) individuals with better traits survive and reproduce more, becoming more common in the next generation."],
+  ["Define adaptation.",
+   "A heritable trait that improves an organism's survival or reproduction in its environment — the result of natural selection."],
+  ["Why is 'giraffes stretched their necks and passed long necks to offspring' wrong?",
+   "Characteristics acquired during life are due to changes in gene expression (or physical use), not changes in the gametes, so they cannot be inherited. This is Lamarck's idea, not Darwin's."],
+  ["Galápagos finches in the 1978 drought — what happened?",
+   "Small seeds disappeared; small-beaked birds couldn't crack the remaining large seeds and died. Large-beaked survivors reproduced, so mean beak size INCREASED in the next generation."],
+  ["Name the five lines of evidence for evolution.",
+   "(1) Fossil record, (2) biogeography, (3) direct observations of natural and artificial selection, (4) homologies (anatomical, developmental, molecular), (5) convergent evolution."],
+  ["Define fossil.",
+   "Traces of past organisms, usually preserved in sedimentary rock."],
+  ["In a stack of sedimentary rock strata, which fossils are oldest?",
+   "The ones in the deepest strata. Lower = older."],
+  ["Define transitional form.",
+   "A fossil intermediate between an ancestral form and a descendant; documents stepwise evolutionary change (e.g., horse fossils show changes in size, foot anatomy, tooth morphology)."],
+  ["Define biogeography.",
+   "The study of the geographic distribution of extinct and modern species."],
+  ["Why was studying ISLANDS so important for recognizing natural selection?",
+   "Species on islands often evolve independently, so evolution is much more obvious there than on mainlands."],
+  ["Why do similar species sometimes appear on continents now far apart?",
+   "Those continents were once physically connected (continental drift). A 250-mya marine fossil in Florida might be found in regions that were adjacent to Florida at that time."],
+  ["Of four populations of one species on a map, which is likely most genetically different?",
+   "The one most geographically isolated from the others — gene flow is limited, so it diverges independently."],
+  ["What is artificial selection (selective breeding)?",
+   "Humans choose which individuals reproduce, producing large morphological changes over generations. Examples: dog breeds, crop varieties, livestock."],
+  ["Are differences among dog breeds caused by genetic differences? (T/F)",
+   "TRUE. Selective breeding only works because there is heritable genetic variation in the population."],
+  ["Key difference between natural and artificial selection?",
+   "Artificial selection has an end goal set by the breeder; natural selection has NO goal — it is simply the consequence of differential survival in the current environment. Both require pre-existing heritable variation."],
+  ["Define homology.",
+   "Fundamental similarity between traits due to descent from a common ancestor."],
+  ["Give an example of anatomical homology.",
+   "The same underlying bone structure in the forelimbs of humans, cats, whales, and bats, despite very different functions."],
+  ["Define vestigial structure with an example.",
+   "A reduced or non-functional remnant of a structure that was useful in an ancestor. Example: hind-limb bones in modern whales (their terrestrial ancestors had legs)."],
+  ["Which organism should NEVER have rear limbs during development: dolphin, killer whale, shark, or sperm whale?",
+   "The SHARK — sharks are fish, not descended from terrestrial vertebrates, so they have no hind-limb developmental program. Whales and dolphins do (as vestiges)."],
+  ["What is developmental homology?",
+   "Embryos of distantly related vertebrates pass through very similar early stages (e.g., pharyngeal pouches, tails), reflecting shared developmental programs inherited from a common ancestor."],
+  ["What is molecular homology?",
+   "All living species use DNA to store information. Sequences of closely related species are more similar than those of distantly related species (e.g., human ≈ gorilla > mouse > goldfish > fern)."],
+  ["Define convergent evolution.",
+   "Two species from different lineages independently evolve similar features because they occupy similar environments or face similar problems."],
+  ["Define analogous structure.",
+   "A trait similar in form or function due to convergent evolution, NOT shared ancestry."],
+  ["Bird wings vs. insect wings — homologous or analogous?",
+   "ANALOGOUS — they evolved independently for similar function (flight). They are an example of convergent evolution."],
+  ["Bird wing vs. bat wing vs. whale flipper — homologous or analogous?",
+   "HOMOLOGOUS — they share the same underlying bone plan inherited from a common tetrapod ancestor."],
+  ["Give three examples of convergent evolution.",
+   "(1) America's chipmunk vs. Australia's sugar glider; (2) giant anteater and echidna both have long snouts/tongues for ants; (3) antifreeze proteins evolving independently in unrelated cold-water fish."],
+  ["Does convergent evolution make classification easier or harder?",
+   "HARDER — similar appearance does not always mean close relationship (e.g., dolphins look like sharks but are mammals)."],
+  ["Two species with a recent common ancestor should share…",
+   "Several homologous structures AND similar embryonic development. They should also have similar biochemistry and DNA sequences."],
+  ["Why is variation a prerequisite for natural selection?",
+   "Selection can only act on differences. If every individual is identical, there is nothing for the environment to 'select' between."],
+  ["Name three sources of genetic variation.",
+   "(1) Random mutation (ultimate source of new alleles), (2) exon shuffling (recombination that rearranges exon combinations), (3) horizontal gene transfer (non-parental DNA transfer, common in bacteria)."],
+  ["Define horizontal gene transfer.",
+   "Transfer of genetic material between organisms by means other than parent-to-offspring inheritance — common in bacteria (e.g., antibiotic-resistance genes)."],
+  ["Define 'descent with modification.'",
+   "Darwin's term for evolution: species change over generations as they descend from common ancestors, accumulating modifications along the way."],
+  ["Define evolutionary tree.",
+   "A branching diagram showing ancestor–descendant relationships among species over time."],
+];
+
+const STORAGE_KEY = "descent_flashcards_v1";
+
+let state = {
+  order: CARDS.map((_, i) => i),  // current display order (indexes into CARDS)
+  pos: 0,                         // position in order
+  known: new Set(),               // set of CARDS indices marked known
+  hideKnown: false,
+};
+
+// --- persistence ---
+function save() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      order: state.order,
+      pos: state.pos,
+      known: Array.from(state.known),
+      hideKnown: state.hideKnown,
+    }));
+  } catch (e) {}
+}
+function load() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return;
+    const data = JSON.parse(raw);
+    if (Array.isArray(data.order)) state.order = data.order;
+    if (typeof data.pos === "number") state.pos = data.pos;
+    if (Array.isArray(data.known))   state.known = new Set(data.known);
+    if (typeof data.hideKnown === "boolean") state.hideKnown = data.hideKnown;
+  } catch (e) {}
+}
+
+// --- derived ---
+function visibleOrder() {
+  if (!state.hideKnown) return state.order;
+  return state.order.filter(i => !state.known.has(i));
+}
+
+function clampPos() {
+  const vis = visibleOrder();
+  if (vis.length === 0) { state.pos = 0; return; }
+  if (state.pos >= vis.length) state.pos = vis.length - 1;
+  if (state.pos < 0) state.pos = 0;
+}
+
+// --- render ---
+const cardEl = document.getElementById("card");
+const qEl    = document.getElementById("question");
+const aEl    = document.getElementById("answer");
+const numF   = document.getElementById("num-front");
+const numB   = document.getElementById("num-back");
+const counter= document.getElementById("counter");
+const knownCount = document.getElementById("known-count");
+const progressBar= document.getElementById("progress-bar");
+const filterBtn  = document.getElementById("filter-btn");
+
+function render() {
+  clampPos();
+  const vis = visibleOrder();
+  if (vis.length === 0) {
+    qEl.textContent = "🎉 All cards marked known!";
+    aEl.textContent = "Press Reset progress or turn off 'Hide known' to see them again.";
+    numF.textContent = "";
+    numB.textContent = "";
+    counter.textContent = "0 of 0";
+    progressBar.style.width = "100%";
+  } else {
+    const cardIdx = vis[state.pos];
+    const [q, a]  = CARDS[cardIdx];
+    qEl.textContent = q;
+    aEl.textContent = a;
+    numF.textContent = `#${cardIdx + 1}`;
+    numB.textContent = `#${cardIdx + 1}`;
+    counter.textContent = `Card ${state.pos + 1} of ${vis.length}`;
+    progressBar.style.width = `${((state.pos + 1) / vis.length) * 100}%`;
+  }
+  knownCount.textContent = `${state.known.size} marked known`;
+  filterBtn.textContent = `Hide known: ${state.hideKnown ? "on" : "off"}`;
+  filterBtn.classList.toggle("active", state.hideKnown);
+  cardEl.classList.remove("flipped");
+}
+
+// --- actions ---
+function flip() { cardEl.classList.toggle("flipped"); }
+
+function next() {
+  const vis = visibleOrder();
+  if (vis.length === 0) return;
+  state.pos = (state.pos + 1) % vis.length;
+  save(); render();
+}
+function prev() {
+  const vis = visibleOrder();
+  if (vis.length === 0) return;
+  state.pos = (state.pos - 1 + vis.length) % vis.length;
+  save(); render();
+}
+
+function currentCardIndex() {
+  const vis = visibleOrder();
+  return vis.length ? vis[state.pos] : null;
+}
+
+function markKnown() {
+  const i = currentCardIndex();
+  if (i === null) return;
+  state.known.add(i);
+  save();
+  // If we're hiding known cards, the list just shrank — don't advance past the new length
+  if (!state.hideKnown) next(); else { clampPos(); render(); }
+}
+function markUnknown() {
+  const i = currentCardIndex();
+  if (i === null) return;
+  state.known.delete(i);
+  save(); next();
+}
+
+function shuffle() {
+  const arr = state.order.slice();
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  state.order = arr;
+  state.pos = 0;
+  save(); render();
+}
+
+function reset() {
+  if (!confirm("Reset all progress (known cards and order)?")) return;
+  state = {
+    order: CARDS.map((_, i) => i),
+    pos: 0,
+    known: new Set(),
+    hideKnown: false,
+  };
+  save(); render();
+}
+
+function toggleFilter() {
+  state.hideKnown = !state.hideKnown;
+  state.pos = 0;
+  save(); render();
+}
+
+// --- keyboard ---
+document.addEventListener("keydown", (e) => {
+  if (e.target.matches("input, textarea")) return;
+  switch (e.key) {
+    case " ":
+    case "Spacebar":
+      e.preventDefault(); flip(); break;
+    case "ArrowRight":
+    case "j":
+      next(); break;
+    case "ArrowLeft":
+    case "h":
+      prev(); break;
+    case "k":
+    case "K":
+      markKnown(); break;
+    case "r":
+    case "R":
+      markUnknown(); break;
+    case "s":
+    case "S":
+      shuffle(); break;
+  }
+});
+
+// init
+load();
+render();
+</script>
+</body>
+</html>
